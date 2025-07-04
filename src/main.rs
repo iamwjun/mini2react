@@ -1,44 +1,32 @@
-use std::{collections::HashSet, path::Path};
-use anyhow::Result;
+mod module_resolver;
 
-use mini2react::dependencies;
-use walkdir::WalkDir;
+use std::path::Path;
 
-fn main() -> Result<()> {
-    // 构建依赖树
-    let root = Path::new("/Users/wujun/MiniProjects/blank/components");
-    let mut all_files = HashSet::new();
+fn main() {
+    // use module_resolver
+    let root = Path::new("/Users/wujun/MiniProjects/blank");
+    let to: &Path = Path::new("/Users/wujun/Github/iamwjun/mini2react/react");
+    let _ = module_resolver::copy_graph_files(root, to);
 
-    // 1. 收集所有 ts/tsx 文件
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|e| {
-            let path = e.path();
-            path.is_file()
-                && path
-                    .extension()
-                    .and_then(|ext| ext.to_str())
-                    .map(|s| s == "ts" || s == "tsx")
-                    .unwrap_or(false)
-        })
-    {
-        all_files.insert(entry.into_path());
-    }
+    // use dep_tree
+    // let root = Path::new("/Users/wujun/MiniProjects/blank/components");
+    // let dep_graph = dep_tree::DepGraph::build_from_root(root)?;
 
-    // 2. 每个文件作为潜在入口构建依赖树
-    let mut forest = serde_json::Map::new();
-    for file in &all_files {
-        let mut visited = HashSet::new();
-        let tree = dependencies::build_tree(file, &all_files, &mut visited)?;
-        forest.insert(file.to_string_lossy().into(), tree);
-    }
+    // println!("{:#?}", dep_graph);
 
-    // 3. 输出为 JSON
-    let output = serde_json::to_string_pretty(&serde_json::Value::Object(forest))?;
-    println!("{}", output);
+    // let roots = dep_graph.find_roots();
 
-    Ok(())
+    // let mut forest = serde_json::Map::new();
+    // for root in roots {
+    //     let mut visited = HashSet::new();
+    //     let tree = dep_graph.build_tree(&root, &mut visited);
+    //     forest.insert(root.to_string_lossy().into(), tree);
+    // }
+
+    // let json = serde_json::to_string_pretty(&serde_json::Value::Object(forest))?;
+    // println!("{}", json);
+
+    // Ok(())
 
     // let file_tree = build_file_tree("/Users/wujun/MiniProjects/blank/components");
 
